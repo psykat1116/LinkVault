@@ -17,8 +17,8 @@ import {
   FileCodeCorner,
 } from "lucide-react";
 import axios from "axios";
-import { ID } from "appwrite";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { useState, useTransition } from "react";
 
 import {
@@ -33,11 +33,12 @@ import {
 import Menu from "../main/Menu";
 import Toggle from "../main/Toggle";
 import { Button } from "../ui/button";
-import { storage } from "../../lib/storage";
 import type { Language, Visibility } from "../../../types";
 
 const Create = () => {
+  const navigate = useNavigate();
   const [isPending, startTransition] = useTransition();
+
   const [title, setTitle] = useState<string>("");
   const [pasteId, setPasteId] = useState<string>("");
   const [content, setContent] = useState<string>("");
@@ -105,50 +106,41 @@ const Create = () => {
     const user = localStorage.getItem("userData");
     startTransition(async () => {
       try {
-        let Fileresponse = undefined;
-        if (uploadedFile) {
-          const UploadFileResponse = await storage.createFile({
-            bucketId: import.meta.env.VITE_APPWRITE_BUCKET_ID!,
-            fileId: ID.unique(),
-            file: uploadedFile,
-          });
+        const formData = new FormData();
+        if (user) formData.append("userId", JSON.parse(user).id);
+        if (uploadedFile) formData.append("file", uploadedFile);
+        if (title.length > 0) formData.append("title", title);
+        if (content.length > 0) formData.append("content", content);
+        if (expiration !== "-1") formData.append("expiration", expiration);
+        if (password.length > 0) formData.append("password", password);
+        if (maxDownloads !== "-1")
+          formData.append("maxDownloads", maxDownloads);
 
-          Fileresponse = await axios.post(`${BackendURL}/api/file`, {
-            fileid: UploadFileResponse.$id,
-            filename: UploadFileResponse.name,
-            bucketId: UploadFileResponse.bucketId,
-            mimeType: UploadFileResponse.mimeType,
-            filesize: UploadFileResponse.sizeOriginal,
-          });
-        }
+        formData.append("language", language);
+        formData.append("visibility", visibility);
+        formData.append(
+          "maxViews",
+          isOneTimeView ? "1" : maxViews !== "-1" ? maxViews : "",
+        );
 
-        const res = await axios.post(`${BackendURL}/api/paste`, {
-          language: language,
-          visibility: visibility,
-          fileUrl: Fileresponse?.data.fileId,
-          title: title.length > 0 ? title : undefined,
-          userId: user ? JSON.parse(user).id : undefined,
-          content: content.length > 0 ? content : undefined,
-          password: password.length > 0 ? password : undefined,
-          expiration: expiration !== "-1" ? expiration : undefined,
-          maxDownloads: maxDownloads !== "-1" ? expiration : undefined,
-          maxViews: isOneTimeView
-            ? "1"
-            : maxViews !== "-1"
-              ? maxViews
-              : undefined,
+        const res = await axios.post(`${BackendURL}/api/paste`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         });
+
         if (res.status === 201) {
           setPasteId(res.data.pasteId);
           toast.success("Paste Created Successfully");
         } else {
           toast.error(res.data.message);
         }
-      } catch (error) {
+      } catch (error: any) {
         setTitle("");
         setContent("");
-        console.log(error);
         setUploadedFile(null);
+        toast.error(error.response.data.message);
+        if (error.response.status === 401) navigate("/auth/signin");
       }
     });
   };
@@ -498,8 +490,8 @@ const Create = () => {
               label="One-Time View"
               value={isOneTimeView}
               setValue={setIsOneTimeView}
-              description1="Disable Burn After Read"
               description2="Enable Burn After Read"
+              description1="Disable Burn After Read"
             />
             {!isOneTimeView && (
               <>

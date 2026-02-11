@@ -57,3 +57,7 @@ export interface IFile extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type PasteWithFile = Omit<IPaste, "fileUrl"> & {
+  fileUrl: IFile | undefined;
+};

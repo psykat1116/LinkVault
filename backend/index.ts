@@ -4,7 +4,6 @@ import cors from "cors";
 import express from "express";
 import authRoute from "./router/auth.routes";
 import userRoute from "./router/user.routes";
-import fileRoute from "./router/file.routes";
 import pasteRoute from "./router/paste.routes";
 import type { Request, Response } from "express";
 import { connectToDatabase, disconnectFromDatabase } from "./db/connect";
@@ -28,7 +27,6 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api/user", userRoute);
 app.use("/api/auth", authRoute);
-app.use("/api/file", fileRoute);
 app.use("/api/paste", pasteRoute);
 
 connectToDatabase()

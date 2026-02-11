@@ -2,12 +2,21 @@ require("dotenv").config();
 
 import { User } from "../schema/user";
 import { Paste } from "../schema/paste";
-import { Visibility, Language } from "../type";
+import {
+  Visibility,
+  Language,
+  type IFile,
+  type IPaste,
+  type PasteWithFile,
+} from "../type";
 
 import bcrypt from "bcryptjs";
 import type { Request, Response } from "express";
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { File } from "../schema/file";
+import { storage } from "../db/storage";
+import { ID } from "node-appwrite";
+import { InputFile } from "node-appwrite/file";
 
 export const createPaste = async (req: Request, res: Response) => {
   try {
@@ -15,7 +24,6 @@ export const createPaste = async (req: Request, res: Response) => {
       title,
       userId,
       content,
-      fileUrl,
       language,
       maxViews,
       password,
@@ -24,8 +32,29 @@ export const createPaste = async (req: Request, res: Response) => {
       maxDownloads,
     } = req.body;
 
-    var expiryData = undefined;
-    var hashedPassword = undefined;
+    let fileUrl: string | undefined = undefined;
+    let expiryData: Date | undefined = undefined;
+    let hashedPassword: string | undefined = undefined;
+
+    if (req.file) {
+      const uploadedFile = await storage.createFile(
+        process.env.APPWRITE_BUCKET_ID!,
+        ID.unique(),
+        InputFile.fromBuffer(req.file.buffer, req.file.originalname),
+      );
+
+      console.log(uploadedFile);
+
+      const newFile = await File.create({
+        fileid: uploadedFile.$id,
+        filename: uploadedFile.name,
+        bucketId: uploadedFile.bucketId,
+        mimeType: uploadedFile.mimeType,
+        filesize: uploadedFile.sizeOriginal,
+      });
+
+      fileUrl = newFile._id.toString();
+    }
     if (expiration) {
       const durationInMinutes = parseInt(expiration, 10);
       if (isNaN(durationInMinutes) || durationInMinutes <= 0) {
@@ -37,6 +66,7 @@ export const createPaste = async (req: Request, res: Response) => {
       const salt = await bcrypt.genSalt(10);
       hashedPassword = await bcrypt.hash(password, salt);
     }
+
     if (!Object.values(Visibility).includes(visibility)) {
       return res.status(400).json({ message: "Invalid visibility value" });
     }
@@ -44,7 +74,7 @@ export const createPaste = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid language value" });
     }
     if (visibility === Visibility.PRIVATE && !userId) {
-      return res.status(400).json({ message: "Login to create private paste" });
+      return res.status(401).json({ message: "Login to create private paste" });
     }
 
     const newPaste = await Paste.create({
@@ -58,7 +88,7 @@ export const createPaste = async (req: Request, res: Response) => {
       maxDownloads,
       expiresAt: expiryData,
       password: hashedPassword,
-      downloadCount: maxDownloads ? 0 : undefined,
+      downloadCount: fileUrl ? 0 : undefined,
     });
 
     return res.status(201).json({ pasteId: newPaste.uniqueid });
@@ -407,6 +437,64 @@ export const updatePaste = async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       message: error instanceof Error ? error.message : "Server error",
+    });
+  }
+};
+
+export const downloadPaste = async (req: Request, res: Response) => {
+  try {
+    const { pasteId } = req.params;
+    const paste = (await Paste.findOne({
+      uniqueid: pasteId,
+    })
+      .populate({
+        path: "fileUrl",
+        model: "File",
+      })
+      .exec()) as PasteWithFile | null;
+
+    if (!paste || !paste.fileUrl) {
+      return res.status(404).json({ message: "Paste not found" });
+    }
+
+    if (
+      paste.maxDownloads &&
+      (paste.downloadCount || 0) >= paste.maxDownloads
+    ) {
+      return res.status(403).json({
+        message: "Maximum download limit reached",
+      });
+    }
+
+    const fileBuffer = await storage.getFileDownload(
+      process.env.APPWRITE_BUCKET_ID!,
+      paste.fileUrl.fileid,
+    );
+    const buffer = Buffer.from(fileBuffer);
+
+    res.setHeader(
+      "Content-Type",
+      paste.fileUrl.mimeType || "application/octet-stream",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${paste.fileUrl.filename || "download"}"`,
+    );
+    res
+      .send(buffer)
+      .on("finish", async () => {
+        console.log("Send Successfull");
+        await Paste.updateOne(
+          { uniqueId: pasteId },
+          { $inc: { downloadCount: 1 } },
+        );
+      })
+      .on("error", () => {
+        console.error("Response error during download");
+      });
+  } catch (error) {
+    return res.status(500).json({
+      message: error instanceof Error ? error.message : "Server Error",
     });
   }
 };

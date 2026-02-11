@@ -28,11 +28,11 @@ import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState, useTransition } from "react";
 
+import Error from "./Error";
 import { Button } from "../ui/button";
 import { BackendURL } from "../../../data";
-import type { PasteResponseType } from "../../../types";
 import { storage } from "../../lib/storage";
-import Error from "./Error";
+import type { PasteResponseType } from "../../../types";
 
 const Paste = () => {
   const { id } = useParams();
@@ -65,6 +65,7 @@ const Paste = () => {
         if (res.data.isProtected === true) {
           setIsPasswordProtected(true);
         } else {
+          console.log(res.data.data);
           setPasteDetails(res.data.data);
         }
       } catch (error: any) {
@@ -106,8 +107,10 @@ const Paste = () => {
           setPasteDetails(res.data);
           toast.success("Password Verified");
         }
-      } catch (error) {
-        toast.error("Password Verification Failed");
+      } catch (error: any) {
+        toast.error(
+          error.response.data.message || "Password Verification Failed",
+        );
       }
     });
   };
@@ -135,8 +138,8 @@ const Paste = () => {
 
         navigate("/");
         setShowDeleteConfirm(false);
-      } catch (error) {
-        toast.error("Paste Delete Error!!");
+      } catch (error: any) {
+        toast.error(error.response.data.message || "Paste Delete Error!!");
       }
     });
   };
@@ -155,15 +158,9 @@ const Paste = () => {
   };
 
   const handleDownload = () => {
-    if (!PasteDetails?.fileUrl) return;
-    const fileURL = storage.getFileDownload({
-      bucketId: PasteDetails.fileUrl.bucketId,
-      fileId: PasteDetails.fileUrl.fileid,
+    startTransition(async () => {
+      await axios.get(`${BackendURL}/api/paste/download/${id}`);
     });
-
-    const link = document.createElement("a");
-    link.href = fileURL;
-    link.click();
   };
 
   const formatDate = (date: string | Date) => {

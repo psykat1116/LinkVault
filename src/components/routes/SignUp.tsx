@@ -46,9 +46,8 @@ const SignUp = () => {
         } else {
           toast.error(`${response.status} - ${response.data.message}`);
         }
-      } catch (error) {
-        console.error("Failed to Signup");
-        toast.error("Failed to SignUp");
+      } catch (error: any) {
+        toast.error(error.response.data.message || "Failed to SignUp");
       } finally {
         setEmail("");
         setPassword("");
@@ -58,11 +57,11 @@ const SignUp = () => {
   };
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center px-4">
+    <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md border border-border p-8 space-y-6 bg-card text-card-foreground rounded-xl shadow flex flex-col gap-4">
         <div className="flex items-center justify-center gap-2">
           <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-            <Vault/>
+            <Vault />
           </div>
           <span className="font-semibold text-lg">Linkvault</span>
         </div>

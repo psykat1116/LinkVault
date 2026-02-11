@@ -25,8 +25,8 @@ const MainLayout = () => {
         });
       } catch (error: any) {
         if (error.response?.status === 401 || error.response?.status === 403) {
-          localStorage.removeItem("userToken");
           localStorage.removeItem("userData");
+          localStorage.removeItem("userToken");
         }
       }
     };

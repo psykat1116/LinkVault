@@ -34,14 +34,15 @@ const SignIn = () => {
         } else {
           toast.error(`${response.status} - ${response.data.message}`);
         }
-      } catch (error) {
-        toast.error("SignIn Failed!");
+      } catch (error: any) {
+        console.log(error);
+        toast.error(error.response?.data?.message || "SignIn Failed!");
       }
     });
   };
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center px-4">
+    <main className="min-h-screen flex items-center justify-center px-4">
       <nav className="w-full max-w-md border border-border bg-card text-card-foreground p-8 space-y-6 flex flex-col gap-4 rounded-xl shadow">
         <div className="flex items-center justify-center gap-2">
           <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
