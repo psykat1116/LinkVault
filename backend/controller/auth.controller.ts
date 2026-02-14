@@ -7,6 +7,7 @@ import type { Request, Response } from "express";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_sauce";
 const EmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const PasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
 export const SignUp = async (req: Request, res: Response) => {
   try {
@@ -15,11 +16,14 @@ export const SignUp = async (req: Request, res: Response) => {
     if (!email || !password || !confirmPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
-    }
     if (!EmailRegex.test(email)) {
       return res.status(400).json({ message: "Invalid email format" });
+    }
+    if (!PasswordRegex.test(password)) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -35,7 +39,7 @@ export const SignUp = async (req: Request, res: Response) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = await User.create({
+    await User.create({
       email,
       username,
       password: hashedPassword,
@@ -66,7 +70,7 @@ export const SignIn = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
-      expiresIn: "1d",
+      expiresIn: "7d",
     });
 
     return res.status(200).json({

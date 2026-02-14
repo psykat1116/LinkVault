@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useTransition } from "react";
 
 import { Button } from "../ui/button";
-import { BackendURL, EmailRegex } from "../../../data";
+import { BackendURL, EmailRegex, PasswordRegex } from "../../../data";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -14,6 +14,7 @@ const SignUp = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [username, setUsername] = useState<string>("");
+  const [error, setError] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [showConfirmPassword, setShowConfirmPassword] =
@@ -24,6 +25,10 @@ const SignUp = () => {
     if (!EmailRegex.test(email)) {
       toast.error("Please Give an valid Email");
       setEmail("");
+      return;
+    }
+    if (!PasswordRegex.test(password)) {
+      setError(true);
       return;
     }
     if (password !== confirmPassword) {
@@ -43,15 +48,15 @@ const SignUp = () => {
         if (response.status === 201) {
           toast.success(response.data.message);
           navigate("/auth/signin");
-        } else {
-          toast.error(`${response.status} - ${response.data.message}`);
         }
-      } catch (error) {
-        console.error("Failed to Signup");
-        toast.error("Failed to SignUp");
+      } catch (error: any) {
+        const message =
+          error.response?.data?.message || "Unknown Error Occurred";
+        toast.error(message);
       } finally {
         setEmail("");
         setPassword("");
+        setError(false);
         setConfirmPassword("");
       }
     });
@@ -62,7 +67,7 @@ const SignUp = () => {
       <div className="w-full max-w-md border border-border p-8 space-y-6 bg-card text-card-foreground rounded-xl shadow flex flex-col gap-4">
         <div className="flex items-center justify-center gap-2">
           <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-            <Vault/>
+            <Vault />
           </div>
           <span className="font-semibold text-lg">Linkvault</span>
         </div>
@@ -120,6 +125,15 @@ const SignUp = () => {
                 )}
               </button>
             </div>
+            {error && (
+              <ul className="flex flex-col gap-0.5 text-xs text-destructive">
+                <li>• Password must be atleast 8 characters</li>
+                <li>• Password must contain atleast one digit</li>
+                <li>• Password must contain atleast one special character</li>
+                <li>• Password must contain atleast one uppercase letter</li>
+                <li>• Password must contain atleast one lowercase letter</li>
+              </ul>
+            )}
           </div>
           <div className="space-y-2 flex flex-col text-sm">
             <label htmlFor="confirmPassword">Confirm Password</label>

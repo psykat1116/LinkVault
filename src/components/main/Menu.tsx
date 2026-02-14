@@ -21,7 +21,7 @@ interface MenuProps {
 
 const Menu = ({ label, value, onChange, disabled , data, deafultvalue }: MenuProps) => {
   return (
-    <div className="p-4 border border-border flex items-center justify-between rounded-md bg-card">
+    <div className="p-4 border border-border flex items-center justify-between rounded-md bg-card shadow">
       <label className="text-sm font-semibold block">{label}</label>
       <Select
         value={value}

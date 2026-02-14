@@ -81,34 +81,42 @@ export const SupportedLanguages = [
 ];
 
 export const ExpirationOptions = [
+  { value: "-1", label: "Never" },
   { value: "10", label: "10 Minutes" },
   { value: "60", label: "1 Hour" },
   { value: "1440", label: "1 Day" },
   { value: "10080", label: "1 Week" },
-  { value: "302400", label: "1 Month" },
-  { value: "-1", label: "Never" },
+  { value: "43200", label: "1 Month" },
+  { value: "86400", label: "2 Month" },
+  { value: "259200", label: "6 Month" },
+  { value: "518400", label: "1 Year" },
 ];
 
 export const ViewLimitOptions = [
+  { value: "-1", label: "Unlimited" },
   { value: "1", label: "1 View" },
-  { value: "5", label: "5 Views" },
   { value: "10", label: "10 Views" },
-  { value: "25", label: "25 Views" },
   { value: "50", label: "50 Views" },
   { value: "100", label: "100 Views" },
-  { value: "-1", label: "Unlimited" },
+  { value: "250", label: "250 Views" },
+  { value: "750", label: "750 Views" },
+  { value: "1000", label: "1000 Views" },
+  { value: "5000", label: "5000 Views" },
 ];
 
 export const DownloadLimitOptions = [
+  { value: "-1", label: "Unlimited" },
   { value: "1", label: "1 Download" },
-  { value: "5", label: "5 Downloads" },
   { value: "10", label: "10 Downloads" },
-  { value: "25", label: "25 Downloads" },
   { value: "50", label: "50 Downloads" },
   { value: "100", label: "100 Downloads" },
-  { value: "-1", label: "Unlimited" },
+  { value: "250", label: "250 Downloads" },
+  { value: "750", label: "750 Downloads" },
+  { value: "1000", label: "1000 Downloads" },
+  { value: "5000", label: "5000 Downloads" },
 ];
 
 export const MaxFileSize = 10 * 1024 * 1024;
 export const BackendURL = "http://localhost:3000";
 export const EmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+export const PasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;

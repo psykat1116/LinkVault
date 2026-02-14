@@ -1,4 +1,4 @@
-import { LogIn, User, Vault } from "lucide-react";
+import { LayoutDashboard, LogIn, User, Vault } from "lucide-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -14,7 +14,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50">
+    <nav className="border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky shadow top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <a href="/" className="flex items-center gap-2">
           <p className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
@@ -24,13 +24,17 @@ const Navbar = () => {
         </a>
         <div className="flex items-center gap-2 text-sm font-semibold">
           {data && token && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center gap-2"
-            >
+            <Button variant="ghost" className="flex items-center gap-2">
               <User size={16} />
               {JSON.parse(data).email}
+            </Button>
+          )}
+          {data && token && (
+            <Button asChild variant="outline">
+              <a href="/dashboard">
+                <LayoutDashboard />
+                Dashboard
+              </a>
             </Button>
           )}
           {data && token ? (

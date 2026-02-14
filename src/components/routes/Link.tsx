@@ -11,7 +11,6 @@ import {
   Share2,
   Trash2,
   EyeOff,
-  Loader,
   FileBox,
   Calendar,
   ArrowLeft,
@@ -21,18 +20,19 @@ import {
   AlertCircle,
   CloudDownload,
   FileCodeCorner,
-  HardDriveDownload,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState, useTransition } from "react";
 
+import Error from "./Error";
 import { Button } from "../ui/button";
 import { BackendURL } from "../../../data";
-import type { PasteResponseType } from "../../../types";
 import { storage } from "../../lib/storage";
-import Error from "./Error";
+import { formatDate } from "../../lib/utils";
+import type { PasteResponseType } from "../../../types";
+import { Skeleton } from "../ui/skeleton";
 
 const Paste = () => {
   const { id } = useParams();
@@ -41,6 +41,7 @@ const Paste = () => {
   const token = localStorage.getItem("userToken");
   const [isPending, startTransition] = useTransition();
 
+  const [error, setError] = useState<number | null>(null);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [passwordInput, setPasswordInput] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -69,14 +70,15 @@ const Paste = () => {
         }
       } catch (error: any) {
         const status = error.response?.status;
-        const message = error.response?.data?.message || "An error occurred";
+        const message =
+          error.response?.data?.message || "Unknown Error Occurred";
         if (status === 401) {
           navigate("/auth/signin");
           localStorage.removeItem("userData");
           localStorage.removeItem("userToken");
           toast.error("Session expired. Please login again.");
-        } else if (status === 403) {
-          return <Error code={403} />;
+        } else if (status === 403 || status === 410) {
+          setError(status);
         } else {
           toast.error(message);
         }
@@ -97,17 +99,24 @@ const Paste = () => {
             },
           },
         );
-        if (res.status !== 200) {
-          toast.error(`${res.status} - ${res.data.message}`);
-        } else {
+        if (res.status === 200) {
           setPasswordInput("");
           setShowPassword(false);
-          setIsPasswordProtected(false);
           setPasteDetails(res.data);
-          toast.success("Password Verified");
+          setIsPasswordProtected(false);
         }
-      } catch (error) {
-        toast.error("Password Verification Failed");
+      } catch (error: any) {
+        const status = error.response?.status;
+        const message =
+          error.response?.data?.message || "Unknown Error Occurred";
+        if (status === 401) {
+          navigate("/auth/signin");
+          localStorage.removeItem("userData");
+          localStorage.removeItem("userToken");
+          toast.error("Session expired. Please login again.");
+        } else {
+          toast.error(message);
+        }
       }
     });
   };
@@ -115,28 +124,27 @@ const Paste = () => {
   const handleDeletePaste = () => {
     startTransition(async () => {
       try {
-        if (PasteDetails?.fileUrl) {
-          storage.deleteFile({
-            bucketId: PasteDetails?.fileUrl.bucketId,
-            fileId: PasteDetails?.fileUrl.fileid,
-          });
-        }
-
         const res = await axios.delete(`${BackendURL}/api/paste/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         if (res.status === 200) {
+          if (PasteDetails?.fileUrl) {
+            await storage.deleteFile({
+              bucketId: PasteDetails?.fileUrl.bucketId,
+              fileId: PasteDetails?.fileUrl.fileid,
+            });
+          }
           toast.success(res.data.message);
-        } else {
-          toast.error(res.data.message);
         }
-
+      } catch (error: any) {
+        const message =
+          error.response?.data?.message || "Unknown Error Occurred";
+        toast.error(message);
+      } finally {
         navigate("/");
         setShowDeleteConfirm(false);
-      } catch (error) {
-        toast.error("Paste Delete Error!!");
       }
     });
   };
@@ -155,42 +163,48 @@ const Paste = () => {
   };
 
   const handleDownload = () => {
-    if (!PasteDetails?.fileUrl) return;
-    const fileURL = storage.getFileDownload({
-      bucketId: PasteDetails.fileUrl.bucketId,
-      fileId: PasteDetails.fileUrl.fileid,
+    startTransition(async () => {
+      try {
+        if (!PasteDetails?.fileUrl) return;
+        const fileURL = storage.getFileDownload({
+          bucketId: PasteDetails.fileUrl.bucketId,
+          fileId: PasteDetails.fileUrl.fileid,
+        });
+
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.click();
+        link.remove();
+
+        await axios.patch(`${BackendURL}/api/paste/${id}`);
+      } catch (error: any) {
+        const message =
+          error.response?.data?.message || "Unknown Error Occurred";
+        toast.error(message);
+      }
     });
-
-    const link = document.createElement("a");
-    link.href = fileURL;
-    link.click();
   };
 
-  const formatDate = (date: string | Date) => {
-    try {
-      const d = typeof date === "string" ? new Date(date) : date;
-      return d.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch (e) {
-      return "Unknown date";
-    }
-  };
+  if (error) {
+    return (
+      <Error
+        code={error}
+        message={
+          error === 403 ? "Access Forbidden" : "Resource No Longer Available"
+        }
+        description={
+          error === 403
+            ? "You do not have permission to view this resource. It may be private or restricted."
+            : "This content has been permanently removed and is no longer available. The link may have expired or been deleted."
+        }
+      />
+    );
+  }
 
   if (isPasswordProtected && !PasteDetails) {
     return (
       <main className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="w-full max-w-md border border-border p-8 space-y-6 shadow rounded-md bg-accent">
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-              <Vault />
-            </div>
-            <span className="font-semibold text-lg">Linkvault</span>
-          </div>
+        <div className="w-full max-w-md border border-border p-8 space-y-6 shadow rounded-md">
           <div className="space-y-2 text-center">
             <div className="flex items-center justify-center mb-4">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -205,7 +219,7 @@ const Paste = () => {
           <div className="space-y-3">
             <div className="flex flex-col gap-1">
               <label htmlFor="password">Password</label>
-              <div className="relative flex justify-between items-center bg-background rounded">
+              <div className="relative flex justify-between items-center border-border border-2 rounded-sm">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -233,7 +247,12 @@ const Paste = () => {
                 </button>
               </div>
             </div>
-            <Button onClick={handlePasswordSubmit} className="w-full" size="lg">
+            <Button
+              size="lg"
+              className="w-full"
+              disabled={isPending}
+              onClick={handlePasswordSubmit}
+            >
               Unlock Paste
             </Button>
           </div>
@@ -244,12 +263,45 @@ const Paste = () => {
 
   if (!PasteDetails && !isPasswordProtected) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin">
-          <Loader />
+      <main className="min-h-screen bg-background">
+        <nav className="border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <Skeleton className="h-10 w-26" />
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-10 w-28" />
+            </div>
+          </div>
+        </nav>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="space-y-2 mb-6">
+            <div className="space-y-4">
+              <div className="inline-flex w-full items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors justify-end">
+                <Skeleton className="w-20 h-10" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-16 w-30" />
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-20" />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-20" />
+            </div>
+          </div>
+          <div className="border border-border overflow-hidden rounded-md shadow bg-card">
+            <div className="bg-muted shadow mt-6 border-b border-border px-4 py-3 flex items-center justify-between">
+              <Skeleton className="h-30 w-full" />
+            </div>
+          </div>
         </div>
-        <span className="ml-2">Loading Paste...</span>
-      </div>
+      </main>
     );
   }
 
@@ -299,10 +351,12 @@ const Paste = () => {
                   <Eye className="w-4 h-4" />
                   {PasteDetails?.viewCount} views
                 </div>
-                <div className="gap-1.5 flex border rounded-sm items-center p-1 text-xs shadow">
-                  <HardDriveDownload className="w-4 h-4" />
-                  {PasteDetails?.viewCount} views
-                </div>
+                {PasteDetails?.downloadCount !== undefined && (
+                  <div className="gap-1.5 flex border rounded-sm items-center p-1 text-xs shadow">
+                    <CloudDownload className="w-4 h-4" />
+                    {PasteDetails?.downloadCount} views
+                  </div>
+                )}
                 <div className="gap-1.5 flex border rounded-sm items-center p-1 text-xs shadow">
                   {PasteDetails?.visibility === "public" ? (
                     <>
@@ -321,12 +375,6 @@ const Paste = () => {
                     </>
                   )}
                 </div>
-                {/* {PasteDetails?. && (
-                  <Badge variant="outline" className="gap-1.5">
-                    <Lock className="w-3 h-3" />
-                    Password Protected
-                  </Badge>
-                )} */}
                 {PasteDetails?.maxViews === 1 && (
                   <div className="gap-1.5 border-destructive/50 text-destructive flex border rounded-sm items-center p-1 text-xs shadow">
                     <Eye className="w-3 h-3" />

@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+import { File } from "../schema/file";
 import { User } from "../schema/user";
 import { Paste } from "../schema/paste";
 import { Visibility, Language } from "../type";
@@ -7,7 +8,6 @@ import { Visibility, Language } from "../type";
 import bcrypt from "bcryptjs";
 import type { Request, Response } from "express";
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
-import { File } from "../schema/file";
 
 export const createPaste = async (req: Request, res: Response) => {
   try {
@@ -58,7 +58,7 @@ export const createPaste = async (req: Request, res: Response) => {
       maxDownloads,
       expiresAt: expiryData,
       password: hashedPassword,
-      downloadCount: maxDownloads ? 0 : undefined,
+      downloadCount: fileUrl ? 0 : undefined,
     });
 
     return res.status(201).json({ pasteId: newPaste.uniqueid });
@@ -79,18 +79,27 @@ export const getPaste = async (req: Request, res: Response) => {
     }
     if (paste.maxViews && paste.viewCount >= paste.maxViews) {
       await Paste.deleteOne({ uniqueid: pasteId });
-      return res.status(403).json({ message: "Paste view limit exceeded" });
+      return res.status(410).json({ message: "Paste view limit exceeded" });
+    }
+    if (
+      paste.maxDownloads &&
+      paste.downloadCount &&
+      paste.downloadCount >= paste.maxDownloads
+    ) {
+      await File.deleteOne({ _id: paste.fileUrl });
+      await Paste.deleteOne({ uniqueid: pasteId });
+      return res.status(410).json({ message: "Paste view limit exceeded" });
     }
     if (paste.expiresAt && paste.expiresAt < new Date()) {
       await Paste.deleteOne({ uniqueid: pasteId });
-      return res.status(403).json({ message: "Paste has expired" });
+      return res.status(410).json({ message: "Paste has expired" });
     }
 
     if (paste.visibility === Visibility.PRIVATE) {
       const token = req.header("Authorization")?.replace("Bearer ", "");
       if (!token) {
         return res
-          .status(401)
+          .status(403)
           .json({ message: "No token, authorization denied" });
       }
 
@@ -99,10 +108,10 @@ export const getPaste = async (req: Request, res: Response) => {
         process.env.JWT_SECRET || "your_secret_sauce",
       );
       if (!paste.userId) {
-        return res.status(401).json({ message: "Access denied to this paste" });
+        return res.status(403).json({ message: "Access denied to this paste" });
       }
-      if ((payload as any).userId !== paste.userId) {
-        return res.status(401).json({ message: "Access denied to this paste" });
+      if ((payload as any).userId !== paste.userId?.toString()) {
+        return res.status(403).json({ message: "Access denied to this paste" });
       }
       if (paste.password) {
         return res.status(200).json({ isProtected: true, data: undefined });
@@ -141,12 +150,14 @@ export const getPaste = async (req: Request, res: Response) => {
           updatedAt: paste.updatedAt,
           visibility: paste.visibility,
           viewCount: paste.viewCount + 1,
+          downloadCount: paste.downloadCount,
         },
       });
     }
 
     if (paste.password)
       return res.status(200).json({ isProtected: true, data: undefined });
+
     await Paste.updateOne({ uniqueid: pasteId }, { $inc: { viewCount: 1 } });
     const file = paste.fileUrl ? await File.findById(paste.fileUrl) : undefined;
 
@@ -164,12 +175,12 @@ export const getPaste = async (req: Request, res: Response) => {
         } catch (err) {
           if (err instanceof TokenExpiredError) {
             return res
-              .status(403)
+              .status(401)
               .json({ message: "Token expired, authorization denied" });
           }
           if (err instanceof JsonWebTokenError) {
             return res
-              .status(401)
+              .status(403)
               .json({ message: "Invalid token, authorization denied" });
           }
 
@@ -205,7 +216,8 @@ export const getPaste = async (req: Request, res: Response) => {
           updatedAt: paste.updatedAt,
           visibility: paste.visibility,
           viewCount: paste.viewCount + 1,
-          isOwner: !!payload && payload.userId === paste.userId.toString(),
+          downloadCount: paste.downloadCount,
+          isOwner: !!payload && payload.userId === paste.userId?.toString(),
         },
       });
     }
@@ -233,6 +245,7 @@ export const getPaste = async (req: Request, res: Response) => {
         updatedAt: paste.updatedAt,
         visibility: paste.visibility,
         viewCount: paste.viewCount + 1,
+        downloadCount: paste.downloadCount,
       },
     });
   } catch (error) {
@@ -263,7 +276,7 @@ export const verifyPastePassword = async (req: Request, res: Response) => {
 
     const isMatch = await bcrypt.compare(password, paste.password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Incorrect password" });
+      return res.status(403).json({ message: "Incorrect password" });
     }
 
     await Paste.updateOne({ uniqueid: pasteId }, { $inc: { viewCount: 1 } });
@@ -319,7 +332,8 @@ export const verifyPastePassword = async (req: Request, res: Response) => {
         updatedAt: paste.updatedAt,
         visibility: paste.visibility,
         viewCount: paste.viewCount + 1,
-        isOwner: !!payload && paste.userId === payload.id,
+        downloadCount: paste.downloadCount,
+        isOwner: !!payload && paste.userId?.toString() === payload.userId,
       });
     }
 
@@ -344,6 +358,7 @@ export const verifyPastePassword = async (req: Request, res: Response) => {
       updatedAt: paste.updatedAt,
       visibility: paste.visibility,
       viewCount: paste.viewCount + 1,
+      downloadCount: paste.downloadCount,
     });
   } catch (error) {
     return res.status(500).json({
@@ -377,7 +392,7 @@ export const deletePaste = async (req: Request, res: Response) => {
     }
 
     if (paste.fileUrl) {
-      await File.deleteOne({ _id: paste.fileUrl });
+      await File.findByIdAndDelete(paste.fileUrl);
     }
     await Paste.deleteOne({ uniqueid: pasteId });
 
@@ -393,13 +408,13 @@ export const updatePaste = async (req: Request, res: Response) => {
   try {
     const { pasteId } = req.params;
 
-    const paste = await Paste.findOne({ uniqueId: pasteId });
-    if (!paste) {
+    const paste = await Paste.findOne({ uniqueid: pasteId });
+    if (!paste || !paste.fileUrl) {
       return res.status(403).json({ message: "Paste not found" });
     }
 
     await Paste.updateOne(
-      { uniqueId: pasteId },
+      { uniqueid: pasteId },
       { $inc: { downloadCount: 1 } },
     );
 

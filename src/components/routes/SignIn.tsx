@@ -31,11 +31,10 @@ const SignIn = () => {
           localStorage.setItem("userToken", response.data.token);
           localStorage.setItem("userData", JSON.stringify(response.data.user));
           navigate("/new");
-        } else {
-          toast.error(`${response.status} - ${response.data.message}`);
         }
-      } catch (error) {
-        toast.error("SignIn Failed!");
+      } catch (error: any) {
+        const message = error.response?.data?.message || "Unknown Error Occurred";
+        toast.error(message);
       }
     });
   };

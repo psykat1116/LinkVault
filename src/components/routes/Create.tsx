@@ -119,6 +119,7 @@ const Create = () => {
             bucketId: UploadFileResponse.bucketId,
             mimeType: UploadFileResponse.mimeType,
             filesize: UploadFileResponse.sizeOriginal,
+            expiration: expiration !== "-1" ? expiration : undefined,
           });
         }
 
@@ -131,7 +132,11 @@ const Create = () => {
           content: content.length > 0 ? content : undefined,
           password: password.length > 0 ? password : undefined,
           expiration: expiration !== "-1" ? expiration : undefined,
-          maxDownloads: maxDownloads !== "-1" ? expiration : undefined,
+          maxDownloads: isOneTimeView
+            ? "1"
+            : maxDownloads !== "-1"
+              ? maxDownloads
+              : undefined,
           maxViews: isOneTimeView
             ? "1"
             : maxViews !== "-1"
@@ -141,21 +146,22 @@ const Create = () => {
         if (res.status === 201) {
           setPasteId(res.data.pasteId);
           toast.success("Paste Created Successfully");
-        } else {
-          toast.error(res.data.message);
         }
-      } catch (error) {
+      } catch (error: any) {
         setTitle("");
         setContent("");
-        console.log(error);
         setUploadedFile(null);
+
+        const message =
+          error.response?.data?.message || "Unknown Error Occurred";
+        toast.error(message);
       }
     });
   };
 
   if (pasteId) {
     return (
-      <main className="min-h-screen bg-accent">
+      <main className="min-h-screen bg-background">
         <nav className="border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <a
@@ -299,7 +305,7 @@ const Create = () => {
   }
 
   return (
-    <main className="min-h-screen bg-accent">
+    <main className="min-h-screen bg-background">
       <nav className="border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <a
@@ -330,24 +336,24 @@ const Create = () => {
                 value={title}
                 placeholder="My code snippet"
                 onChange={(e) => setTitle(e.target.value)}
-                className="bg-background border p-2 rounded-md"
+                className="bg-background border p-2 rounded-md shadow"
               />
             </div>
-            <div className="flex gap-2 p-2 bg-input rounded-lg">
+            <div className="flex gap-2 py-2">
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={() => handleModeChange("text")}
                 className={`flex-1 py-2 px-4 rounded font-medium text-sm transition-colors ${
-                  inputMode === "text" && "bg-accent text-accent-foreground"
+                  inputMode === "text" && "bg-accent"
                 }`}
               >
                 Paste Text
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={() => handleModeChange("file")}
                 className={`flex-1 py-2 px-4 rounded font-medium text-sm transition-colors ${
-                  inputMode === "file" && "bg-accent text-accent-foreground"
+                  inputMode === "file" && "bg-accent"
                 }`}
               >
                 Upload File
@@ -363,7 +369,7 @@ const Create = () => {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Paste your code or text here..."
-                  className="h-100 bg-background resize-none p-3 border rounded-md"
+                  className="h-100 bg-background resize-none p-3 border rounded-md shadow"
                 />
                 <p className="text-xs text-muted-foreground text-right">
                   {content.length} characters
@@ -373,7 +379,7 @@ const Create = () => {
             {inputMode === "file" && (
               <div className="space-y-2">
                 {uploadedFile ? (
-                  <div className="border-2 border-dashed border-primary/30 rounded-lg text-center cursor-pointer hover:border-primary/50 bg-card flex justify-center items-center h-20 px-4">
+                  <div className="border-2 border-dashed border-primary/30 rounded-lg text-center cursor-pointer hover:border-primary/50 bg-card flex justify-center items-center min-h-20 px-4">
                     <div className="flex items-center w-full justify-between gap-1">
                       <div className="flex gap-1 items-center">
                         {uploadedFile.type.startsWith("image/") && (
@@ -392,7 +398,7 @@ const Create = () => {
                           <FileCodeCorner size={30} />
                         )}
                         <div className="flex flex-col items-start min-w-0">
-                          <p className="font-semibold text-sm wrap-break-word">
+                          <p className="font-semibold text-xs md:text-sm wrap-break-word line-clamp-1 text-left">
                             {uploadedFile.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -407,13 +413,13 @@ const Create = () => {
                         onClick={() => setUploadedFile(null)}
                       >
                         <Trash2 />
-                        Remove
+                        <p className="max-md:hidden">Remove</p>
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <label htmlFor="file" className="block">
-                    <div className="border-2 border-dashed border-primary/30 rounded-lg text-center cursor-pointer hover:border-primary/50 h-110 bg-card flex justify-center items-center">
+                    <div className="border-2 border-dashed border-primary/30 rounded-lg text-center cursor-pointer hover:border-primary/50 h-110 bg-card flex justify-center shadow items-center">
                       <div className="flex flex-col gap-2">
                         <Upload className="w-5 h-5 text-muted-foreground mx-auto" />
                         <p className="text-sm font-medium">Upload a file</p>

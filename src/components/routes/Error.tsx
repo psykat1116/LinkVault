@@ -2,21 +2,20 @@ import { Button } from "../ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 
 interface ErrorProps {
-  code?: number;
+  code: number;
+  message: string;
+  description: string;
 }
 
-const Error = ({ code = 404 }: ErrorProps) => {
+const Error = ({ code, message, description }: ErrorProps) => {
   return (
-    <main className="min-h-screen bg-accent flex items-center justify-center px-4">
+    <main className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="p-12 border border-border text-center space-y-2 bg-card shadow rounded-md">
           <div>
             <div className="text-6xl font-bold text-primary mb-2">{code}</div>
-            <h1 className="text-2xl font-bold mb-2">Page Not Found</h1>
-            <p className="text-sm text-muted-foreground">
-              The paste you're looking for doesn't exist or may have been
-              deleted.
-            </p>
+            <h1 className="text-2xl font-bold mb-2">{message}</h1>
+            <p className="text-sm text-muted-foreground">{description}</p>
           </div>
           <div className="space-y-3 pt-4">
             <a href="/" className="block">

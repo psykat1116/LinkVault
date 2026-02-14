@@ -69,4 +69,20 @@ export type PasteResponseType = {
   content: string | undefined;
   expiresAt: Date | undefined;
   maxViews: number | undefined;
+  downloadCount: number | undefined;
+};
+
+export type UserPastes = {
+  title: string | undefined;
+  language: Language;
+  visibility: Visibility;
+  expiresAt: Date | undefined;
+  maxViews: number | undefined;
+  viewCount: number;
+  maxDownloads: number | undefined;
+  downloadCount: number | undefined;
+  uniqueid: string;
+  createdAt: Date;
+  bucketId: string | undefined;
+  fileId: string | undefined;
 };

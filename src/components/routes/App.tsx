@@ -9,6 +9,7 @@ import Create from "./Create";
 import SignIn from "./SignIn";
 import SignUp from "./SignUp";
 import { BackendURL } from "../../../data";
+import Dashboard from "./Dashboard";
 
 const MainLayout = () => {
   const data = localStorage.getItem("userData");
@@ -35,7 +36,7 @@ const MainLayout = () => {
   }, []);
 
   return (
-    <main className="min-h-screen bg-accent text-accent-foreground font-poppins">
+    <main className="min-h-screen bg-background text-accent-foreground font-poppins">
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -49,7 +50,27 @@ const MainLayout = () => {
             path="/auth/signup"
             element={data && token ? <Navigate to="/" replace /> : <SignUp />}
           />
-          <Route path="*" element={<Error />} />
+          <Route
+            path="/dashboard"
+            element={
+              data && token ? (
+                <Dashboard />
+              ) : (
+                <Navigate to="/auth/signin" replace />
+              )
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <Error
+                code={404}
+                message="Page Not Found"
+                description="The paste you're looking for doesn't exist or may have been
+              deleted."
+              />
+            }
+          />
         </Routes>
       </BrowserRouter>
     </main>

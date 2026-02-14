@@ -19,7 +19,7 @@ const Toggle = ({
   description2,
 }: ToggleProps) => {
   return (
-    <div className="p-4 border border-border flex justify-between items-center rounded-md bg-card">
+    <div className="p-4 border border-border flex justify-between items-center rounded-md bg-card shadow">
       <div className="space-y-4">
         <label className="text-sm font-semibold">{label}</label>
         <div className="flex items-center justify-between">

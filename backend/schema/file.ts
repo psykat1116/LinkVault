@@ -32,6 +32,11 @@ export const fileSchema = new Schema<IFile>(
       type: Date,
       default: Date.now,
     },
+    expiresAt: {
+      type: Date,
+      expires: 0,
+      required: false,
+    },
   },
   {
     timestamps: true,
