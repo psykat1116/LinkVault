@@ -3,24 +3,24 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
-  AlertCircle,
-  ArrowLeft,
-  Check,
-  Download,
-  Eye,
-  FileText,
-  Plus,
-  Trash2,
   X,
+  Eye,
+  Plus,
+  Check,
+  Trash2,
+  Download,
+  FileText,
+  ArrowLeft,
+  AlertCircle,
 } from "lucide-react";
 
-import Error from "./Error";
-import { Button } from "../ui/button";
-import { BackendURL } from "../../../data";
-import { formatDate, getRelativeTime } from "../../lib/utils";
-import type { UserPastes } from "../../../types";
-import { storage } from "../../lib/storage";
-import { Skeleton } from "../ui/skeleton";
+import { storage } from "@/lib/storage";
+import { BackendURL } from "@/lib/data";
+import type { UserPastes } from "@/lib/types";
+import Error from "@/components/routes/Error";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate, getRelativeTime } from "@/lib/utils";
 
 const Dashboard = () => {
   const navigate = useNavigate();

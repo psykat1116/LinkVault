@@ -1,5 +1,5 @@
-import type { FeatureItemType, CTAItemType } from "./types";
 import { FileText, Lock, Share2, Zap } from "lucide-react";
+import type { FeatureItemType, CTAItemType } from "@/lib/types";
 
 export const FeatureItems: FeatureItemType[] = [
   {

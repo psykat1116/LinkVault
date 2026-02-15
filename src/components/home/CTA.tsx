@@ -1,6 +1,6 @@
-import CTACard from "./CTACard";
-import { CTAItems } from "../../../data";
-import type { CTAItemType } from "../../../types";
+import { CTAItems } from "@/lib/data";
+import type { CTAItemType } from "@/lib/types";
+import CTACard from "@/components/home/CTACard";
 
 const CTA = () => {
   return (

@@ -1,25 +1,32 @@
 import React from "react";
 import {
   Select,
-  SelectContent,
   SelectItem,
-  SelectTrigger,
   SelectValue,
-} from "../ui/select";
+  SelectTrigger,
+  SelectContent,
+} from "@/components/ui/select";
 
 interface MenuProps {
   label: string;
   value: string;
-  deafultvalue: string;
-  disabled: boolean;
-  onChange: React.Dispatch<React.SetStateAction<string>>;
   data: {
     value: string;
     label: string;
   }[];
+  disabled: boolean;
+  deafultvalue: string;
+  onChange: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const Menu = ({ label, value, onChange, disabled , data, deafultvalue }: MenuProps) => {
+const Menu = ({
+  data,
+  label,
+  value,
+  onChange,
+  disabled,
+  deafultvalue,
+}: MenuProps) => {
   return (
     <div className="p-4 border border-border flex items-center justify-between rounded-md bg-card shadow">
       <label className="text-sm font-semibold block">{label}</label>

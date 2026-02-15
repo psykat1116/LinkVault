@@ -26,13 +26,13 @@ import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState, useTransition } from "react";
 
-import Error from "./Error";
-import { Button } from "../ui/button";
-import { BackendURL } from "../../../data";
-import { storage } from "../../lib/storage";
-import { formatDate } from "../../lib/utils";
-import type { PasteResponseType } from "../../../types";
-import { Skeleton } from "../ui/skeleton";
+import { BackendURL } from "@/lib/data";
+import { storage } from "@/lib/storage";
+import { formatDate } from "@/lib/utils";
+import Error from "@/components/routes/Error";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { PasteResponseType } from "@/lib/types";
 
 const Paste = () => {
   const { id } = useParams();
@@ -46,11 +46,8 @@ const Paste = () => {
   const [passwordInput, setPasswordInput] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
-  const [isPasswordProtected, setIsPasswordProtected] =
-    useState<boolean>(false);
-  const [PasteDetails, setPasteDetails] = useState<
-    PasteResponseType | undefined
-  >(undefined);
+  const [isPasswordProtected, setIsPasswordProtected] = useState<boolean>(false);
+  const [PasteDetails, setPasteDetails] = useState<PasteResponseType | undefined>(undefined);
 
   useEffect(() => {
     if (hadFetched.current) return;

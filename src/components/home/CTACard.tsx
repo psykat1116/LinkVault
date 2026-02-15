@@ -1,5 +1,5 @@
-import { Button } from "../ui/button";
-import type { CTAItemType } from "../../../types";
+import type { CTAItemType } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 const CTACard = ({
   href,

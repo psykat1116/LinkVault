@@ -1,6 +1,6 @@
 import axios from "axios";
+import { BackendURL } from "@/lib/data";
 import { useNavigate } from "react-router-dom";
-import { BackendURL } from "../../data";
 
 export const useAuthCheck = () => {
   const navigate = useNavigate();

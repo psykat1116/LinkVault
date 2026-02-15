@@ -29,12 +29,12 @@ import {
   VisibilityOptions,
   SupportedLanguages,
   DownloadLimitOptions,
-} from "../../../data";
-import Menu from "../main/Menu";
-import Toggle from "../main/Toggle";
-import { Button } from "../ui/button";
-import { storage } from "../../lib/storage";
-import type { Language, Visibility } from "../../../types";
+} from "@/lib/data";
+import { storage } from "@/lib/storage";
+import Menu from "@/components/main/Menu";
+import Toggle from "@/components/main/Toggle";
+import { Button } from "@/components/ui/button";
+import type { Language, Visibility } from "@/lib/types";
 
 const Create = () => {
   const [isPending, startTransition] = useTransition();
@@ -46,14 +46,12 @@ const Create = () => {
   const [language, setLanguage] = useState<Language>("text");
   const [expiration, setExpiration] = useState<string>("10");
   const [maxDownloads, setMaxDownloads] = useState<string>("-1");
-  const [visibility, setVisibility] = useState<Visibility>("public");
-
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isOneTimeView, setIsOneTimeView] = useState<boolean>(false);
+  const [visibility, setVisibility] = useState<Visibility>("public");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [inputMode, setInputMode] = useState<"text" | "file">("text");
-  const [isPasswordProtected, setIsPasswordProtected] =
-    useState<boolean>(false);
+  const [isPasswordProtected, setIsPasswordProtected] = useState<boolean>(false);
 
   const handleModeChange = (mode: "text" | "file") => {
     setContent("");

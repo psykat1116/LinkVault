@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch } from "../ui/switch";
+import { Switch } from "@/components/ui/switch";
 
 interface ToggleProps {
   label: string;

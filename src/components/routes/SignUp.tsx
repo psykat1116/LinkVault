@@ -1,11 +1,11 @@
 import axios from "axios";
 import { toast } from "sonner";
-import { EyeOff, Eye, Vault } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useTransition } from "react";
+import { EyeOff, Eye, Vault } from "lucide-react";
 
-import { Button } from "../ui/button";
-import { BackendURL, EmailRegex, PasswordRegex } from "../../../data";
+import { Button } from "@/components/ui/button";
+import { BackendURL, EmailRegex, PasswordRegex } from "@/lib/data";
 
 const SignUp = () => {
   const navigate = useNavigate();

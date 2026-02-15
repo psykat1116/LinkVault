@@ -1,4 +1,4 @@
-import type { FeatureItemType } from "../../../types";
+import type { FeatureItemType } from "@/lib/types";
 
 const FeatureCard = ({ icon: Icon, title, description }: FeatureItemType) => {
   return (

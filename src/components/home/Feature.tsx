@@ -1,6 +1,6 @@
-import { FeatureItems } from "../../../data";
-import FeatureCard from "../home/FeatureCard";
-import type { FeatureItemType } from "../../../types";
+import { FeatureItems } from "@/lib/data";
+import type { FeatureItemType } from "@/lib/types";
+import FeatureCard from "@/components/home/FeatureCard";
 
 const Feature = () => {
   return (

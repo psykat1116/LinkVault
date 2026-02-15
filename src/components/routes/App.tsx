@@ -2,14 +2,14 @@ import axios from "axios";
 import { useEffect } from "react";
 import { Route, Routes, Navigate, BrowserRouter } from "react-router-dom";
 
-import Link from "./Link";
-import Home from "./Home";
-import Error from "./Error";
-import Create from "./Create";
-import SignIn from "./SignIn";
-import SignUp from "./SignUp";
-import { BackendURL } from "../../../data";
-import Dashboard from "./Dashboard";
+import Link from "@/components/routes/Link";
+import Home from "@/components/routes/Home";
+import Error from "@/components/routes/Error";
+import Create from "@/components/routes/Create";
+import SignIn from "@/components/routes/SignIn";
+import SignUp from "@/components/routes/SignUp";
+import { BackendURL } from "../../lib/data";
+import Dashboard from "@/components/routes/Dashboard";
 
 const MainLayout = () => {
   const data = localStorage.getItem("userData");

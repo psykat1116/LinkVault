@@ -1,6 +1,6 @@
-import { LayoutDashboard, LogIn, User, Vault } from "lucide-react";
-import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { LayoutDashboard, LogIn, User, Vault } from "lucide-react";
 
 const Navbar = () => {
   const navigate = useNavigate();
