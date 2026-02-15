@@ -97,4 +97,18 @@ Log In to the [MongoDB](https://mongodb.com/) and create a free cluster. Then fr
 
 - Then go to the newly created bucket settings and in the `Permissions Section` and add new `Any` role and check all operations(Create, Update, Read, Delete). Optionally you can change the `Maximum File Size` as 10MB for futher safety.
 
-## 🎯 Tell Me You Face Any Problem During The Development & Production Into My Email From This [Profile](https://github.com/psykat1116) Or Tell Me In Issue Section. Tell Me You Want To Suggest Any Update. 
+## Design Decisions
+1. React + Vite for fast local development and a lightweight frontend build pipeline.
+2. Bun runtime and package manager to keep install and dev cycles fast.
+3. Express + Mongoose for a simple, familiar REST API and MongoDB modeling.
+4. Appwrite Storage for file blobs, with the backend storing only file metadata.
+5. JWT-based auth with client-side storage to keep the API stateless.
+6. MongoDB TTL fields (`expiresAt`) for automatic cleanup of expired pastes/files.
+
+## Assumptions and Limitations
+1. File storage permissions are configured in Appwrite to allow the required operations.
+2. Authentication tokens are stored in `localStorage`, which is convenient but not as secure as HttpOnly cookies.
+3. The backend API is configured for `http://localhost:5173` CORS by default.
+4. Expiration and view/download limits are enforced server-side on read and may delete expired records.
+5. File deletion depends on both MongoDB cleanup and Appwrite delete calls from the client.
+---
