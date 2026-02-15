@@ -48,14 +48,14 @@ It is recommended to use [bun](https://bun.com/) as it is lot more faster than n
   ```bash
     cd LinkVault
     cd backend
-    bun i
-    bun run dev
+    bun i // or use npm i
+    bun run dev // or use npm run dev
   ```
 - Run Frontend Server
   ```bash
     cd ..
-    bun i
-    bun run dev
+    bun i // or use npm i
+    bun run dev // or use npm run dev
   ```
 
 ## v) Setup The .env.local File
