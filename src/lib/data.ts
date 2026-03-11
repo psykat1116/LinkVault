@@ -117,6 +117,6 @@ export const DownloadLimitOptions = [
 ];
 
 export const MaxFileSize = 10 * 1024 * 1024;
-export const BackendURL = "http://localhost:3000";
+export const BackendURL = import.meta.env.BACKEND_URL || "http://localhost:3000";
 export const EmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 export const PasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
