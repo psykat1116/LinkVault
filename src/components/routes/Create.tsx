@@ -407,6 +407,7 @@ const Create = () => {
                       <Button
                         size="sm"
                         type="button"
+                        disabled={isPending}
                         variant="destructive"
                         onClick={() => setUploadedFile(null)}
                       >

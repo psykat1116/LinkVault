@@ -46,8 +46,11 @@ const Paste = () => {
   const [passwordInput, setPasswordInput] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
-  const [isPasswordProtected, setIsPasswordProtected] = useState<boolean>(false);
-  const [PasteDetails, setPasteDetails] = useState<PasteResponseType | undefined>(undefined);
+  const [isPasswordProtected, setIsPasswordProtected] =
+    useState<boolean>(false);
+  const [PasteDetails, setPasteDetails] = useState<
+    PasteResponseType | undefined
+  >(undefined);
 
   useEffect(() => {
     if (hadFetched.current) return;
@@ -328,13 +331,15 @@ const Paste = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-2 mb-6">
           <div className="space-y-4">
-            <a
-              href="/"
-              className="inline-flex w-full items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors justify-end"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to home
-            </a>
+            <div className="flex justify-end items-center w-full">
+              <a
+                href="/"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to home
+              </a>
+            </div>
             <div className="space-y-2">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-2 flex-1">
@@ -351,7 +356,7 @@ const Paste = () => {
                 {PasteDetails?.downloadCount !== undefined && (
                   <div className="gap-1.5 flex border rounded-sm items-center p-1 text-xs shadow">
                     <CloudDownload className="w-4 h-4" />
-                    {PasteDetails?.downloadCount} views
+                    {PasteDetails?.downloadCount} downloads
                   </div>
                 )}
                 <div className="gap-1.5 flex border rounded-sm items-center p-1 text-xs shadow">
@@ -494,7 +499,12 @@ const Paste = () => {
               {PasteDetails.fileUrl.mimeType.startsWith("text/") && (
                 <FileCodeCorner size={30} />
               )}
-              <Button onClick={handleDownload} size="sm" variant="outline">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isPending}
+                onClick={handleDownload}
+              >
                 Download
                 <CloudDownload />
               </Button>

@@ -97,7 +97,7 @@ export const getPaste = async (req: Request, res: Response) => {
 
     if (paste.visibility === Visibility.PRIVATE) {
       const token = req.header("Authorization")?.replace("Bearer ", "");
-      if (!token) {
+      if (!token || token === "null") {
         return res
           .status(403)
           .json({ message: "No token, authorization denied" });
@@ -166,7 +166,7 @@ export const getPaste = async (req: Request, res: Response) => {
       const user = await User.findById(paste.userId);
       const token = req.header("Authorization")?.replace("Bearer ", "");
 
-      if (token) {
+      if (token && token !== "null") {
         try {
           payload = jwt.verify(
             token,
@@ -181,7 +181,7 @@ export const getPaste = async (req: Request, res: Response) => {
           if (err instanceof JsonWebTokenError) {
             return res
               .status(403)
-              .json({ message: "Invalid token, authorization denied" });
+              .json({ message: "Invalid token here, authorization denied" });
           }
 
           return res.status(500).json({ message: "Server error" });
@@ -287,7 +287,7 @@ export const verifyPastePassword = async (req: Request, res: Response) => {
       const user = await User.findById(paste.userId);
       const token = req.header("Authorization")?.replace("Bearer ", "");
 
-      if (token) {
+      if (token && token !== "null") {
         try {
           payload = jwt.verify(
             token,
@@ -377,7 +377,7 @@ export const deletePaste = async (req: Request, res: Response) => {
     }
 
     const token = req.header("Authorization")?.replace("Bearer ", "");
-    if (!token) {
+    if (!token || token === "null") {
       return res
         .status(401)
         .json({ message: "No token, authorization denied" });
