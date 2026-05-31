@@ -12,6 +12,8 @@ LinkVault/
 │   ├── controller/           # Router Controller
 │   ├── router/               # Router Details
 │   ├── schema/               # Database Schema
+│   ├── jobs/                 # Background Jobs (cleanup)
+│   ├── lib/                  # Shared Server-side Clients (Appwrite)
 │   ├── type.ts               # Type Declarations
 │   ├── .env.local            # All Backend environment Variable
 │   ├── README.md             # Backend overview
@@ -63,6 +65,9 @@ It is recommended to use [bun](https://bun.com/) as it is lot more faster than n
 ```bash
   JWT_SECRET =
   DATABASE_URL =
+  APPWRITE_ENDPOINT =
+  APPWRITE_PROJECT_ID =
+  APPWRITE_API_KEY =
 ```
 - For Frontend create a .env.local file the root folder with the given environment variable
 ```bash
@@ -103,12 +108,17 @@ Log In to the [MongoDB](https://mongodb.com/) and create a free cluster. Then fr
 3. Express + Mongoose for a simple, familiar REST API and MongoDB modeling.
 4. Appwrite Storage for file blobs, with the backend storing only file metadata.
 5. JWT-based auth with client-side storage to keep the API stateless.
-6. MongoDB TTL fields (`expiresAt`) for automatic cleanup of expired pastes/files.
+6. MongoDB TTL index (`expires: 0`) on `Paste.expiresAt` for automatic cleanup of expired text pastes — safe because paste documents carry no Appwrite blob.
+7. The `File` schema intentionally has **no** MongoDB TTL index. Letting MongoDB auto-delete File documents would bypass the Appwrite deletion call and leave orphaned blobs. The background cleanup job is the sole owner of the File lifecycle.
+8. Server-side Appwrite client (`node-appwrite`) so the backend can delete blobs directly on paste expiry, download-limit hit, or manual delete — the frontend is no longer responsible for cleanup.
+9. Background cleanup job runs every 60 seconds to purge expired File records: it calls `storage.deleteFile` first, then removes the MongoDB document. If Appwrite is unreachable the MongoDB record is preserved so the next cycle can retry; a 404 response means the blob is already gone and the record is cleaned up immediately.
 
 ## Assumptions and Limitations
 1. File storage permissions are configured in Appwrite to allow the required operations.
 2. Authentication tokens are stored in `localStorage`, which is convenient but not as secure as HttpOnly cookies.
 3. The backend API is configured for `http://localhost:5173` CORS by default.
-4. Expiration and view/download limits are enforced server-side on read and may delete expired records.
-5. File deletion depends on both MongoDB cleanup and Appwrite delete calls from the client.
+4. Expiration and view/download limits are enforced server-side on read. The backend attempts to delete the Appwrite blob first; if that succeeds (or returns 404), the File document is removed from MongoDB. If Appwrite is unreachable, the File document is kept for the cleanup job to retry — the paste is still deleted and a 410 is returned to the caller.
+5. The server-side Appwrite API key (`APPWRITE_API_KEY`) must have Storage delete scope — without it the cleanup job and all server-side file deletions will fail to remove blobs.
+6. The cleanup job polls every 60 seconds; files can linger in Appwrite for up to 60 seconds after their `expiresAt` timestamp.
+7. **Existing deployments:** if the server was ever run before this change, a TTL index named `expiresAt_1` may already exist on the `files` collection in MongoDB Atlas. Drop it manually to prevent MongoDB from bypassing the cleanup job: `db.files.dropIndex("expiresAt_1")`.
 ---

@@ -7,6 +7,7 @@ import userRoute from "./router/user.routes";
 import fileRoute from "./router/file.routes";
 import pasteRoute from "./router/paste.routes";
 import type { Request, Response } from "express";
+import { startCleanupJob } from "./jobs/cleanup";
 import { connectToDatabase, disconnectFromDatabase } from "./db/connect";
 
 const app = express();
@@ -36,6 +37,7 @@ connectToDatabase()
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
+    startCleanupJob();
   })
   .catch((error) => {
     console.error("Failed to connect to the database:", error);

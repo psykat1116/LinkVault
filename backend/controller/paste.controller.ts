@@ -4,10 +4,31 @@ import { File } from "../schema/file";
 import { User } from "../schema/user";
 import { Paste } from "../schema/paste";
 import { Visibility, Language } from "../type";
+import { storage } from "../lib/appwrite";
+import { AppwriteException } from "node-appwrite";
 
 import bcrypt from "bcryptjs";
 import type { Request, Response } from "express";
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
+
+async function deleteAppwriteFile(
+  bucketId: string,
+  fileid: string,
+  fileDocId: string,
+) {
+  try {
+    await storage.deleteFile(bucketId, fileid);
+  } catch (err) {
+    if (err instanceof AppwriteException && err.code === 404) {
+      // already gone from Appwrite — still clean up the DB record
+    } else {
+      // Appwrite unreachable — leave the File record so the cleanup job can retry
+      return;
+    }
+  }
+  
+  await File.deleteOne({ _id: fileDocId });
+}
 
 export const createPaste = async (req: Request, res: Response) => {
   try {
@@ -86,11 +107,30 @@ export const getPaste = async (req: Request, res: Response) => {
       paste.downloadCount &&
       paste.downloadCount >= paste.maxDownloads
     ) {
-      await File.deleteOne({ _id: paste.fileUrl });
+      if (paste.fileUrl) {
+        const file = await File.findById(paste.fileUrl);
+        if (file) {
+          await deleteAppwriteFile(
+            file.bucketId,
+            file.fileid,
+            paste.fileUrl.toString(),
+          );
+        }
+      }
       await Paste.deleteOne({ uniqueid: pasteId });
-      return res.status(410).json({ message: "Paste view limit exceeded" });
+      return res.status(410).json({ message: "Paste download limit exceeded" });
     }
     if (paste.expiresAt && paste.expiresAt < new Date()) {
+      if (paste.fileUrl) {
+        const file = await File.findById(paste.fileUrl);
+        if (file) {
+          await deleteAppwriteFile(
+            file.bucketId,
+            file.fileid,
+            paste.fileUrl.toString(),
+          );
+        }
+      }
       await Paste.deleteOne({ uniqueid: pasteId });
       return res.status(410).json({ message: "Paste has expired" });
     }
@@ -392,7 +432,14 @@ export const deletePaste = async (req: Request, res: Response) => {
     }
 
     if (paste.fileUrl) {
-      await File.findByIdAndDelete(paste.fileUrl);
+      const file = await File.findById(paste.fileUrl);
+      if (file) {
+        await deleteAppwriteFile(
+          file.bucketId,
+          file.fileid,
+          paste.fileUrl.toString(),
+        );
+      }
     }
     await Paste.deleteOne({ uniqueid: pasteId });
 

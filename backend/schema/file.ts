@@ -34,7 +34,6 @@ export const fileSchema = new Schema<IFile>(
     },
     expiresAt: {
       type: Date,
-      expires: 0,
       required: false,
     },
   },
